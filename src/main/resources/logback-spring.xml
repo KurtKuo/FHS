@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 變數定義 -->
+    <property name="LOG_PATH" value="${LOG_PATH:-C:/Aplog/logs}"/>
+    <property name="LOG_FILE_NAME" value="fhs-system"/>
+
+    <!-- Console 輸出 -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File 輸出 + 滾動日誌 -->
+    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天一個新檔案，最多保留 30 天 -->
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 設定 Log 級別 -->
+    <root level="INFO">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="RollingFile"/>
+    </root>
+
+    <!-- 更細部的 log 等級 -->
+    <logger name="org.springframework.security" level="DEBUG"/>
+</configuration>

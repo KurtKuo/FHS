@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: farmily-harmony-system
+
+  config:
+    import: optional:file:C:/fhs-config/db-env.properties
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/farmilydb?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Taipei
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # ????? update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG

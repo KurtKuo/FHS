@@ -1,0 +1,44 @@
+plugins {
+	id 'java' // Java 專案
+	id 'org.springframework.boot' version '3.5.0' // Spring Boot 插件（自動組態與執行）
+	id 'io.spring.dependency-management' version '1.1.7' // Spring 依賴管理插件
+}
+
+group = 'com.farmily' // 組織名稱（套件前綴）
+version = '0.0.1-SNAPSHOT' // 專案版本
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17) // 使用 Java 17
+	}
+}
+
+repositories {
+	mavenCentral() // 下載依賴套件的來源
+}
+
+dependencies {
+	// ✅ Spring Boot 核心依賴
+	implementation 'org.springframework.boot:spring-boot-starter' // 基本 Spring Boot 組件
+	implementation 'org.springframework.boot:spring-boot-starter-web' // Web / REST API 功能
+	implementation 'org.springframework.boot:spring-boot-starter-security' // Spring Security 驗證授權
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // Spring Data JPA (ORM)
+	implementation 'mysql:mysql-connector-java:8.0.33' // MySQL 資料庫驅動程式
+
+	// ✅ JSON Web Token（JWT）相關：使用 jjwt 套件
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // JWT 核心 API
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // JWT 實作（Runtime 使用）
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // 支援 JSON 序列化（使用 Jackson）
+
+	// ✅ Lombok（簡化 Java Bean 開發）
+	compileOnly 'org.projectlombok:lombok:1.18.30' // 編譯期使用（例如 @Getter, @Setter）
+	annotationProcessor 'org.projectlombok:lombok:1.18.30' // 處理註解用
+
+	// ✅ 測試相關
+	testImplementation 'org.springframework.boot:spring-boot-starter-test' // 整合測試工具
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // JUnit 平台啟動器
+}
+
+tasks.named('test') {
+	useJUnitPlatform() // 啟用 JUnit 5 測試平台
+}
