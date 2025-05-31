@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,48 +16,60 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * JWT 認證過濾器，對每個請求檢查 Authorization Header 的 JWT token。
+ * 驗證成功後，設定 Spring Security 的認證上下文。
+ */
 @Component
 @RequiredArgsConstructor
+@Slf4j  // 啟用 lombok 的 SLF4J Logger
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
-    /**
-     * 這個 Filter 會攔截所有請求，
-     * 從 HTTP Header 的 Authorization 讀取 Bearer Token (JWT)。
-     * 解析 JWT，驗證有效性後，
-     * 將認證資料放入 SecurityContext，使 Spring Security 知道使用者已登入。
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
+        String path = request.getServletPath();
+        log.debug("📥 處理請求路徑: {}", path);
 
-        // 如果沒有帶 Authorization 或不是 Bearer 開頭，直接放行
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // 跳過 /api/auth/ 的登入註冊相關請求
+        if (path.startsWith("/api/auth/")) {
+            log.debug("➡️ 跳過認證過濾器 (auth 路徑)");
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 取得 token 字串 (去掉 "Bearer " 字首)
-        jwt = authHeader.substring(7);
-        // 從 JWT 解出 username
-        username = jwtService.extractUsername(jwt);
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String username;
 
-        // 如果有 username 且尚未認證
+        // 檢查 Authorization Header 格式
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("❌ Authorization header 缺失或格式錯誤");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        jwt = authHeader.substring(7);
+        username = jwtService.extractUsername(jwt);
+        log.debug("🔍 從 token 取得使用者名稱: {}", username);
+
+        // 若尚未認證，嘗試驗證並設定 SecurityContext
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 透過 UserDetailsService 載入使用者資料
+            log.debug("🔄 從資料庫載入使用者資料...");
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 驗證 token 是否有效 (包含簽章、過期時間)
+            log.info("✅ 使用者載入成功: {}", userDetails.getUsername());
+            log.info("🔐 使用者權限: {}", userDetails.getAuthorities());
+
             if (jwtService.isTokenValid(jwt, userDetails)) {
-                // 建立一個認證物件並放入 SecurityContext
+                log.info("✅ Token 有效，設定認證");
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
 
@@ -65,10 +78,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                log.info("✅ SecurityContext 已設置認證: {}",
+                        SecurityContextHolder.getContext().getAuthentication().getName());
+            } else {
+                log.warn("❌ Token 驗證失敗 (可能是過期或簽名錯誤)");
+            }
+        } else {
+            if (username == null) {
+                log.warn("⚠️ Token 無 username");
+            } else {
+                log.debug("⚠️ SecurityContext 已有認證，跳過設定");
             }
         }
 
-        // 繼續執行 Filter 鍊
+        log.debug("➡️ 請求繼續通過過濾器鏈...");
+        log.debug("🔍 最終認證狀態: {}", SecurityContextHolder.getContext().getAuthentication());
+
         filterChain.doFilter(request, response);
     }
 }

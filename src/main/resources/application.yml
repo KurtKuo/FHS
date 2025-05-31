@@ -34,3 +34,6 @@ logging:
   level:
     root: INFO
     org.springframework.security: DEBUG
+
+jwt:
+  secret: WgB59ksxHDB6bt4qAfBVR5MZNRRVZeIP
