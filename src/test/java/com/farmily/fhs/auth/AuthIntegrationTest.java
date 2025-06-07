@@ -2,6 +2,8 @@ package com.farmily.fhs.auth;
 
 import com.farmily.fhs.auth.dto.LoginRequest;
 import com.farmily.fhs.auth.dto.LoginResponse;
+import com.farmily.fhs.auth.dto.RegisterRequest;
+import com.farmily.fhs.auth.dto.RegisterResponse;
 import com.farmily.fhs.common.repository.UserRepository;
 import com.farmily.fhs.common.repository.entity.UserEntity;
 import com.farmily.fhs.common.security.JwtService;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,15 +50,35 @@ public class AuthIntegrationTest {
     @Autowired
     private JwtService jwtService;
 
+    private final String NEWTEST_USERNAME = "newuser";
+    private final String NEWTEST_PASSWORD = "newpassword";
+
     private final String TEST_USERNAME = "testuser";
     private final String TEST_PASSWORD = "password";
+
+    private final String FAILTEST_USERNAME = "failuser";
+    private final String FAILTEST_PASSWORD = "correct123";
 
     /**
      * 🔧 測試前建立測試帳號資料
      */
     @BeforeEach
     void setup() {
+
+        SecurityContextHolder.clearContext();
         userRepository.findByUsername(TEST_USERNAME)
+                .ifPresent(existing -> {
+                    userRepository.delete(existing);
+                    userRepository.flush();
+                });
+
+        userRepository.findByUsername(FAILTEST_USERNAME)
+                .ifPresent(existing -> {
+                    userRepository.delete(existing);
+                    userRepository.flush();
+                });
+
+        userRepository.findByUsername(NEWTEST_USERNAME)
                 .ifPresent(existing -> {
                     userRepository.delete(existing);
                     userRepository.flush();
@@ -69,6 +92,7 @@ public class AuthIntegrationTest {
                 .password(encodedPassword)
                 .email("test@example.com")
                 .phone("0912345678")
+                .role("ROLE_USER")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -81,6 +105,27 @@ public class AuthIntegrationTest {
         UserDetails userDetails = userDetailsService.loadUserByUsername(TEST_USERNAME);
         System.out.println("UserDetails 密碼：" + userDetails.getPassword());
         System.out.println("資料庫密碼：" + userRepository.findByUsername(TEST_USERNAME).get().getPassword());
+    }
+
+    @DisplayName("✅ 使用者註冊成功")
+    @Test
+    void registerUserSuccessfully() {
+
+        RegisterRequest request = new RegisterRequest(NEWTEST_USERNAME, NEWTEST_PASSWORD, "new@example.com", "0912345678");
+
+        ResponseEntity<RegisterResponse> response = restTemplate.postForEntity(
+                "/api/auth/register", request, RegisterResponse.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(NEWTEST_USERNAME, response.getBody().getUsername());
+        assertNotNull(response.getBody().getToken());
+
+        // 🧹 清理註冊帳號（避免測試資料殘留）
+        userRepository.findByUsername(NEWTEST_USERNAME).ifPresent(user -> {
+            userRepository.delete(user);
+            userRepository.flush();
+        });
     }
 
     @AfterEach
@@ -116,11 +161,31 @@ public class AuthIntegrationTest {
     @DisplayName("🚫 登入失敗：使用錯誤密碼應回傳 UNAUTHORIZED")
     @Test
     void loginWithInvalidPasswordShouldFail() {
-        LoginRequest request = new LoginRequest(TEST_USERNAME, "wrongPassword");
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "/api/auth/login", request, String.class);
+        String wrongPassword = "wrongPassword";
 
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        // 建立一個新使用者
+        UserEntity entity = UserEntity.builder()
+                .username(FAILTEST_USERNAME)
+                .password(passwordEncoder.encode(FAILTEST_PASSWORD))
+                .email("fail@test.com")
+                .phone("0900000000")
+                .role("ROLE_USER")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        userRepository.saveAndFlush(entity);
+
+        // 使用錯誤密碼登入
+        LoginRequest loginRequest = new LoginRequest(FAILTEST_USERNAME, wrongPassword);
+        ResponseEntity<LoginResponse> loginResponse = restTemplate.postForEntity(
+                "/api/auth/login", loginRequest, LoginResponse.class);
+        assertEquals(HttpStatus.UNAUTHORIZED, loginResponse.getStatusCode());
+
+        // 🧹 清理註冊帳號（避免測試資料殘留）
+        userRepository.findByUsername(FAILTEST_USERNAME).ifPresent(user -> {
+            userRepository.delete(user);
+            userRepository.flush();
+        });
     }
 
     @DisplayName("🚫 未帶 Token 存取受保護資源應回傳 UNAUTHORIZED")

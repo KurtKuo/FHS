@@ -35,6 +35,9 @@ public class UserEntity {
     private String email;
     private String phone;
 
+    @Column(name = "role") // 👈 加這行
+    private String role;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

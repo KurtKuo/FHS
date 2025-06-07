@@ -6,11 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor // 加這個
-public class LoginRequest extends BaseRequest {
+public class RegisterRequest extends BaseRequest {
     private String username;
     private String password;
+    private String email;
+    private String phone;
 }

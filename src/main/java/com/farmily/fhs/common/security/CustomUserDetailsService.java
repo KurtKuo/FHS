@@ -3,7 +3,9 @@ package com.farmily.fhs.common.security;
 import com.farmily.fhs.common.repository.UserRepository;
 import com.farmily.fhs.common.repository.entity.UserEntity;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,7 +20,8 @@ import java.util.List;
 @Slf4j // ✅ 啟用 SLF4J log 記錄功能
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -42,11 +45,16 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         log.info("✅ 找到使用者: {}", user.getUsername());
 
-        // 回傳 Spring Security 內建的 User 實作，並指派預設角色 ROLE_USER
-        return new org.springframework.security.core.userdetails.User(
+        // 確保 role 有值，沒值給預設 ROLE_USER
+        String role = user.getRole();
+        if (role == null || role.trim().isEmpty()) {
+            role = "ROLE_USER";
+        }
+
+        return new User(
                 user.getUsername(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(new SimpleGrantedAuthority(role))
         );
     }
 }

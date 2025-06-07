@@ -2,23 +2,77 @@ package com.farmily.fhs.auth.service.impl;
 
 import com.farmily.fhs.auth.dto.LoginRequest;
 import com.farmily.fhs.auth.dto.LoginResponse;
+import com.farmily.fhs.auth.dto.RegisterRequest;
+import com.farmily.fhs.auth.dto.RegisterResponse;
 import com.farmily.fhs.auth.service.AuthService;
+import com.farmily.fhs.common.dto.BaseResponse;
+import com.farmily.fhs.common.repository.UserRepository;
+import com.farmily.fhs.common.repository.entity.UserEntity;
 import com.farmily.fhs.common.security.JwtService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
-@RequiredArgsConstructor
 @Slf4j // ✅ 啟用 SLF4J 日誌功能
 public class AuthServiceImpl implements AuthService {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
+
+    @Override
+    public RegisterResponse register(RegisterRequest request) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("使用者名稱已存在！");
+        }
+
+        UserEntity user = UserEntity.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        try {
+            userRepository.save(user);
+        } catch (Exception e) {
+            log.error("❌ 註冊失敗：{}", e.getMessage(), e);
+            throw new RuntimeException("註冊失敗，請稍後再試！");
+        }
+
+        String token = jwtService.generateToken(user.getUsername());
+
+        RegisterResponse response = RegisterResponse.builder()
+                .username(user.getUsername())
+                .token(token)
+                .build();
+
+        response.setStatus(200);
+        response.setMessage("SUCCESS");
+        response.setTimestamp(LocalDateTime.now());
+        return response;
+    }
 
     /**
      * 用戶登入流程：
@@ -28,23 +82,13 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public LoginResponse login(LoginRequest request) {
-        log.info("🔐 嘗試登入：{}", request.getUsername());
-
-        // 進行使用者驗證（帳號 + 密碼）
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        log.info("✅ 登入成功：{}", request.getUsername());
-
-        // 設定認證資訊到 SecurityContext 中（讓後續可以取用該用戶資訊）
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 產生 JWT Token
         String jwtToken = jwtService.generateToken(authentication);
-        log.debug("🧾 產生 JWT token：{}", jwtToken);
-
-        // 回傳包含 token 的登入回應
         return new LoginResponse(jwtToken, request.getUsername());
     }
 
