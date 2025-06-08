@@ -1,4 +1,4 @@
-package com.farmily.fhs.auth.controller;
+package com.farmily.fhs.admin.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

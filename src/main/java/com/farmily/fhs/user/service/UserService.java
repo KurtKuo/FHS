@@ -1,6 +1,6 @@
-package com.farmily.fhs.auth.service;
+package com.farmily.fhs.user.service;
 
-import com.farmily.fhs.auth.dto.ChangePasswordRequest;
+import com.farmily.fhs.user.dto.ChangePasswordRequest;
 
 /**
  * 使用者相關操作的服務介面，例如帳號刪除等。

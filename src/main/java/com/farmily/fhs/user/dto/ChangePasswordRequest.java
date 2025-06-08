@@ -1,4 +1,4 @@
-package com.farmily.fhs.auth.dto;
+package com.farmily.fhs.user.dto;
 
 import com.farmily.fhs.common.dto.BaseRequest;
 import lombok.AllArgsConstructor;

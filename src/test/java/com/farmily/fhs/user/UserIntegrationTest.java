@@ -1,7 +1,7 @@
 package com.farmily.fhs.user;
 
-import com.farmily.fhs.auth.dto.ChangePasswordRequest;
-import com.farmily.fhs.auth.service.UserService;
+import com.farmily.fhs.user.dto.ChangePasswordRequest;
+import com.farmily.fhs.user.service.UserService;
 import com.farmily.fhs.common.repository.UserRepository;
 import com.farmily.fhs.common.repository.entity.UserEntity;
 import org.junit.jupiter.api.AfterEach;

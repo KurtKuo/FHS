@@ -1,7 +1,7 @@
-package com.farmily.fhs.auth.service.impl;
+package com.farmily.fhs.user.service.impl;
 
-import com.farmily.fhs.auth.dto.ChangePasswordRequest;
-import com.farmily.fhs.auth.service.UserService;
+import com.farmily.fhs.user.dto.ChangePasswordRequest;
+import com.farmily.fhs.user.service.UserService;
 import com.farmily.fhs.common.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
