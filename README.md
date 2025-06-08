@@ -1,204 +1,116 @@
 # FHS
 farmily-harmony-system
 ---
+# Farmily FHS API 文件
 
-````markdown
-# 🛡️ 認證 API 文件 (`/api/auth`)
+## 一、用到的技術與觀念
 
-提供使用者註冊、登入、登出功能。回應皆為 JSON 格式。
-
----
-
-## 📌 註冊使用者
-
-- **Endpoint:** `POST /api/auth/register`
-- **用途：** 註冊新帳號
-
-### ✅ Request Body
-```json
-{
-  "username": "user123",
-  "password": "securePassword",
-  "email": "user@example.com",
-  "phone": "0912345678"
-}
-````
-
-| 欄位       | 類型     | 說明    | 必填 |
-| -------- | ------ | ----- | -- |
-| username | string | 使用者名稱 | ✅  |
-| password | string | 密碼    | ✅  |
-| email    | string | 電子郵件  | ✅  |
-| phone    | string | 手機號碼  | ✅  |
-
-### ✅ Response Body
-
-```json
-{
-  "username": "user123",
-  "email": "user@example.com",
-  "status": 200,
-  "message": "Register success",
-  "timestamp": "2025-06-08T15:34:20.123"
-}
-```
-
-| 欄位        | 類型     | 說明            |
-| --------- | ------ | ------------- |
-| username  | string | 註冊成功的使用者名稱    |
-| email     | string | 使用者信箱         |
-| status    | int    | HTTP 狀態碼（200） |
-| message   | string | 操作訊息          |
-| timestamp | string | 回應時間戳記        |
+- **Spring Boot**：快速建構 REST API
+- **Spring Security + JWT**：無狀態的使用者認證機制
+- **Lombok**：簡化 Java 物件程式碼
+- **BCryptPasswordEncoder**：密碼加密與驗證
+- **ResponseEntity**：HTTP 狀態碼與回傳內容控制
+- **Exception Handling**：例外處理，確保 API 穩定性
+- **Authentication 注入**：取得目前登入使用者資訊
+- **RESTful API 設計**：依照標準 HTTP 動詞進行 CRUD 操作
 
 ---
 
-## 📌 使用者登入
+## 二、Auth 功能
 
-* **Endpoint:** `POST /api/auth/login`
-* **用途：** 登入並取得 JWT
+### 1. 註冊帳號 (Register)
 
-### ✅ Request Body
+- **路徑**：`POST /api/auth/register`
+- **說明**：用戶註冊新帳號
+- **Request Body**：
 
-```json
-{
-  "username": "user123",
-  "password": "securePassword"
-}
-```
+| 欄位名稱 | 型態   | 必填 | 說明           |
+| -------- | ------ | ---- | -------------- |
+| username | String | 是   | 使用者帳號     |
+| password | String | 是   | 使用者密碼     |
+| email    | String | 是   | 電子郵件       |
+| phone    | String | 是   | 電話號碼       |
 
-| 欄位       | 類型     | 說明    | 必填 |
-| -------- | ------ | ----- | -- |
-| username | string | 使用者名稱 | ✅  |
-| password | string | 密碼    | ✅  |
+- **Response Body**：
 
-### ✅ Response Body
+| 欄位名稱 | 型態   | 說明                 |
+| -------- | ------ | -------------------- |
+| username | String | 註冊成功的使用者帳號 |
+| status   | int    | HTTP 狀態碼 200      |
+| message  | String | 回傳訊息             |
+| timestamp| String | 伺服器回應時間       |
 
-```json
-{
-  "username": "user123",
-  "token": "jwt-token-string",
-  "status": 200,
-  "message": "Login success",
-  "timestamp": "2025-06-08T15:40:01.456"
-}
-```
+- **HTTP 狀態碼**：
 
-| 欄位        | 類型     | 說明             |
-| --------- | ------ | -------------- |
-| username  | string | 登入成功的使用者名稱     |
-| token     | string | JWT Token（需保存） |
-| status    | int    | HTTP 狀態碼（200）  |
-| message   | string | 操作訊息           |
-| timestamp | string | 回應時間戳記         |
+| 狀態碼 | 意義           |
+| ------ | -------------- |
+| 200    | 註冊成功       |
+| 400    | 資料格式錯誤   |
+| 409    | 帳號已存在     |
 
 ---
 
-## 📌 使用者登出
+### 2. 登入 (Login)
 
-* **Endpoint:** `POST /api/auth/logout`
-* **用途：** 登出（JWT 模式，前端清除 Token 即可）
+- **路徑**：`POST /api/auth/login`
+- **說明**：用戶登入取得 JWT
+- **Request Body**：
 
-### ✅ Request Header
+| 欄位名稱 | 型態   | 必填 | 說明         |
+| -------- | ------ | ---- | ------------ |
+| username | String | 是   | 使用者帳號   |
+| password | String | 是   | 使用者密碼   |
 
-```
-Authorization: Bearer <your_token>
-```
+- **Response Body**：
 
-### ⬅️ Response
+| 欄位名稱 | 型態   | 說明           |
+| -------- | ------ | -------------- |
+| username | String | 登入的使用者帳號 |
+| token    | String | JWT 權杖       |
+| status   | int    | HTTP 狀態碼 200|
+| message  | String | 回傳訊息       |
+| timestamp| String | 伺服器回應時間 |
 
-* **HTTP Status:** `204 No Content`
-* 無內容，表示成功登出
+- **HTTP 狀態碼**：
 
----
-
-## 📎 備註
-
-* 請在登入成功後保存 JWT Token，並於所有需驗證之 API 請求中加上：
-
-```
-Authorization: Bearer <your_token>
-```
-
-* 時間格式為 ISO 8601，例如：`2025-06-08T15:40:01.456`
-
----
+| 狀態碼 | 意義         |
+| ------ | ------------ |
+| 200    | 登入成功     |
+| 401    | 帳號或密碼錯誤 |
 
 ---
 
-```markdown
-# 👤 使用者帳戶 API 文件 (`/api/user`)
+### 3. 登出 (Logout)
 
-提供登入使用者的資料存取與帳號刪除功能。JWT 驗證必要，請在 `Authorization` Header 中附上：
+- **路徑**：`POST /api/auth/logout`
+- **說明**：JWT 模式下，前端丟棄 token 即可
+- **Headers**：
 
-```
+| 欄位         | 說明       |
+| ------------ | ---------- |
+| Authorization| Bearer token |
 
-Authorization: Bearer \<your\_token>
+- **Response**：
 
-```
-
----
-
-## 📌 取得使用者個人資料
-
-- **Endpoint:** `GET /api/user/profile`
-- **用途：** 取得目前登入使用者的基本資訊（測試用途）
-
-### ✅ Request Header
-```
-
-Authorization: Bearer \<your\_token>
-
-````
-
-### ✅ Response Body
-```json
-"Hello, user123! This is your profile."
-````
-
-| 回傳格式    | 類型     | 說明         |
-| ------- | ------ | ---------- |
-| message | string | 簡單的個人化歡迎訊息 |
-
-> 📘 備註：未來可以擴充為回傳完整使用者資料物件（如 email、phone 等）
+| 狀態碼 | 意義          |
+| ------ | ------------- |
+| 204    | 登出成功(無內容) |
 
 ---
 
-## 🗑️ 刪除目前登入使用者帳號
+## 三、User 功能
 
-* **Endpoint:** `DELETE /api/user/delete`
-* **用途：** 刪除目前登入的帳號
+### 1. 取得個人資料 (Get Profile)
 
-### ✅ Request Header
+- **路徑**：`GET /api/user/profile`
+- **說明**：需登入，取得目前使用者資訊
+- **Headers**：
 
-```
-Authorization: Bearer <your_token>
-```
+| 欄位         | 說明       |
+| ------------ | ---------- |
+| Authorization| Bearer token |
 
-### ✅ Response Body
+- **Response Body**：
 
-```json
-"帳號已刪除"
-```
 
-| 回傳格式    | 類型     | 說明   |
-| ------- | ------ | ---- |
-| message | string | 成功訊息 |
 
----
-
-## ⚠️ 錯誤處理（通用）
-
-若 Token 錯誤、未授權或已過期，將收到如下回應：
-
-```json
-{
-  "timestamp": "2025-06-08T16:00:00.000",
-  "status": 401,
-  "error": "Unauthorized",
-  "message": "Invalid or expired token",
-  "path": "/api/user/profile"
-}
-```
-
----
