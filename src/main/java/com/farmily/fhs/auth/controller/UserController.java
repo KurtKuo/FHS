@@ -1,14 +1,21 @@
 package com.farmily.fhs.auth.controller;
 
+import com.farmily.fhs.auth.dto.ChangePasswordRequest;
+import com.farmily.fhs.auth.dto.ChangePasswordResponse;
 import com.farmily.fhs.auth.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api")
@@ -46,5 +53,29 @@ public class UserController {
 
         log.info("✅ 帳號已刪除：{}", username);
         return ResponseEntity.ok("帳號已刪除");
+    }
+
+    /**
+     * 更改密碼（需登入）
+     * @param request 包含原密碼與新密碼
+     * @param authentication Spring Security 的使用者資訊
+     * @return ResponseEntity 包含成功訊息與 HTTP 200 OK
+     */
+    @PutMapping("/user/change-password")
+    public ResponseEntity<ChangePasswordResponse> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        log.info("🔐 {} 嘗試更改密碼", username);
+
+        userService.changePassword(username, request);
+
+        ChangePasswordResponse response = new ChangePasswordResponse();
+        response.setStatus(HttpStatus.OK.value());
+        response.setMessage("密碼已成功更新");
+        response.setTimestamp(LocalDateTime.now());
+
+        return ResponseEntity.ok(response);
     }
 }

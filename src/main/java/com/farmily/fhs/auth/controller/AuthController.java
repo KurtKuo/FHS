@@ -9,7 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +28,7 @@ public class AuthController {
     /**
      * 使用者註冊帳號
      * @param request 請求物件，包含帳號、密碼、Email、電話等
-     * @return ResponseEntity 包含註冊回應 DTO 與 HTTP 狀態碼（201 CREATED）
+     * @return ResponseEntity 包含註冊回應 DTO 與 HTTP 狀態碼（200 OK）
      */
     @PostMapping("/auth/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest request) {
