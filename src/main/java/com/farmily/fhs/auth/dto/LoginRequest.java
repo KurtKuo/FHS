@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor // 加這個
+@AllArgsConstructor
 public class LoginRequest extends BaseRequest {
     private String username;
     private String password;

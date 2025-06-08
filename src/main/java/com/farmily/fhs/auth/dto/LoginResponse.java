@@ -11,6 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse extends BaseResponse {
-    private String token; // 假設使用 JWT
+    private String token;
     private String username;
 }

@@ -6,14 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest extends BaseRequest {
-    private String username;
-    private String password;
-    private String email;
-    private String phone;
+public class ChangePasswordRequest extends BaseRequest {
+    private String currentPassword;
+    private String newPassword;
 }
